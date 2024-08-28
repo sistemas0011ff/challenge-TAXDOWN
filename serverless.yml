@@ -1,0 +1,90 @@
+service: my-serverless-project
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+  - serverless-plugin-scripts
+
+custom:
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    includeModules: true
+  scripts:
+    hooks:
+      'before:package:initialize': npx prisma generate
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-2
+  environment:
+    DATABASE_URL: ${ssm:/swapi/reto/DATABASE_URL}
+    SWAPI_BASE_URL: ${ssm:/swapi/reto/SWAPI_BASE_URL}
+
+functions:
+  swaggerUI:
+    handler: src/app/handlers/swaggerUIHandler.handler
+
+    events:
+      - http:
+          path: /docs
+          method: get
+          cors:
+            origin: '*' # Or specify domains, e.g., 'http://example.com'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+  createCustomer:
+    handler: src/app/handlers/Customer/createCustomer.handler
+    events:
+      - http:
+          path: customer
+          method: post
+
+  getCustomers:
+    handler: src/app/handlers/Customer/getCustomer.handler
+    events:
+      - http:
+          path: customer
+          method: get
+
+  getCustomerById:
+    handler: src/app/handlers/customer/getCustomerById.handler
+    events:
+      - http:
+          path: customer/{id}
+          method: get
+
+  updateCustomer:
+    handler: src/app/handlers/customer/updateCustomer.handler
+    events:
+      - http:
+          path: customer/{id}
+          method: put
+
+  deleteCustomer:
+    handler: src/app/handlers/customer/deleteCustomer.handler
+    events:
+      - http:
+          path: customer/{id}
+          method: delete
+
+  addCredit:
+    handler: src/app/handlers/customer/addCreditCustomer.handler
+    events:
+      - http:
+          path: customer/credit
+          method: post
+
+  listCustomersByCredit:
+    handler: src/app/handlers/Customer/listCustomersOrderedByCredit.handler
+    events:
+      - http:
+          path: customer/credit/list
+          method: get
